@@ -1,12 +1,13 @@
 import * as fs from "node:fs";
-import { execSync } from "node:child_process";
 
 import { Octokit } from "@octokit/rest";
 import { throttling } from "@octokit/plugin-throttling";
 import type { Context, PluginSpec } from "semantic-release";
 import parseRepositoryUrl from "parse-github-repo-url";
 
-const ThrottlingOctokit = Octokit.plugin(throttling);
+import * as octokitCommitMultipleFiles from "octokit-commit-multiple-files";
+
+const ThrottlingOctokit = Octokit.plugin(throttling, octokitCommitMultipleFiles);
 
 type RepositorySlug = {
   owner: string;
@@ -102,22 +103,25 @@ async function prepare(pluginConfig: PluginSpec, context: Context) {
   // This is the default commit message from @semantic-release/git
   const message = `chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}`;
 
+  console.info('Computing changes for signed commit');
+  let changedFiles: { [key: string]: any } = {};
   for (const path of assets) {
-    const content = readFileInBase64(path);
-    const sha = execSync(`git rev-parse ${branch}:${path}`, {
-      encoding: "utf8",
-    }).trim();
+    changedFiles[path] = readFileInBase64(path);
+  }
 
-    await octokit.rest.repos.createOrUpdateFileContents({
+  console.info('Pushing on GitHub via API');
+  await octokit.createOrUpdateFiles({
       owner: slug.owner,
       repo: slug.name,
-      path,
-      message,
       branch,
-      content,
-      sha,
+      createBranch: false,
+      changes: [
+        {
+          message,
+          files: changedFiles,
+        },
+      ],
     });
-  }
 }
 
 module.exports = {

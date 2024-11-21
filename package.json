@@ -26,6 +26,7 @@
   "dependencies": {
     "@octokit/plugin-throttling": "^9.0.0",
     "@octokit/rest": "^21.0.0",
+    "octokit-commit-multiple-files": "^5.0.2",
     "parse-github-repo-url": "1.4.1"
   },
   "devDependencies": {
