@@ -5,9 +5,10 @@ import { throttling } from "@octokit/plugin-throttling";
 import type { Context, PluginSpec } from "semantic-release";
 import parseRepositoryUrl from "parse-github-repo-url";
 
-import * as octokitCommitMultipleFiles from "octokit-commit-multiple-files";
+import { CreateOrUpdateFilesOptions } from 'octokit-commit-multiple-files/create-or-update-files';
+import createOrUpdateFiles from 'octokit-commit-multiple-files/create-or-update-files';
 
-const ThrottlingOctokit = Octokit.plugin(throttling, octokitCommitMultipleFiles);
+const ThrottlingOctokit = Octokit.plugin(throttling);
 
 type RepositorySlug = {
   owner: string;
@@ -110,18 +111,25 @@ async function prepare(pluginConfig: PluginSpec, context: Context) {
   }
 
   console.info('Pushing on GitHub via API');
-  await octokit.createOrUpdateFiles({
+  try {
+    const options: CreateOrUpdateFilesOptions = {
       owner: slug.owner,
       repo: slug.name,
       branch,
-      createBranch: false,
       changes: [
         {
           message,
           files: changedFiles,
         },
       ],
-    });
+    };
+
+    await createOrUpdateFiles(octokit, options);
+
+    console.log('Files updated successfully!');
+  } catch (error) {
+    console.error('Error updating files:', error);
+  }
 }
 
 module.exports = {
