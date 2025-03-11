@@ -100,7 +100,7 @@ async function prepare(pluginConfig: PluginSpec, context: Context) {
     );
   }
   // This is the default commit message from @semantic-release/git
-  const message = `chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}`;
+  const message = `chore(release): ${nextRelease.version}\n\n${nextRelease.notes}`;
 
   for (const path of assets) {
     const content = readFileInBase64(path);
